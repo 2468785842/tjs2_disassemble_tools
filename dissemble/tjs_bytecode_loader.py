@@ -19,7 +19,7 @@ class TJSByteCodeLoader:
         """读取对象（代码上下文）信息"""
 
         tag = stream.read_int32()
-        size = stream.read_int32()
+        stream.skip(4) # size
 
         if tag != OBJ_TAG_LE: None
 
@@ -27,23 +27,22 @@ class TJSByteCodeLoader:
         top_level = stream.read_int32()
         obj_count = stream.read_int32()
         
-        objects = [None] * obj_count  # 存储所有对象
-        work = []  # 变体替换工作列表
-        parents = [0] * obj_count  # 父对象索引
-        prop_setters = [0] * obj_count  # 属性设置器索引
-        prop_getters = [0] * obj_count  # 属性获取器索引
-        super_class_getters = [0] * obj_count  # 超类获取器索引
-        properties = [[] for _ in range(obj_count)]  # 属性列表
+        objects: List[TJSInterCodeContext | None] = [None] * obj_count  # 存储所有对象
+        work: List[VariantReplace] = []  # 变体替换工作列表
+        parents: List[int] = [0] * obj_count  # 父对象索引
+        prop_setters: List[int] = [0] * obj_count  # 属性设置器索引
+        prop_getters: List[int] = [0] * obj_count  # 属性获取器索引
+        super_class_getters: List[int] = [0] * obj_count  # 超类获取器索引
+        properties: List[List[int]] = [[] for _ in range(obj_count)]  # 属性列表
         
         # 读取每个对象
         for o in range(obj_count):
             # 检查对象标签
-            tag = stream.read_uint32()
+            tag = stream.read_int32()
             if tag != FILE_TAG_LE:
                 raise ValueError("ByteCode broken: invalid object tag")
             
-            # 跳过对象大小（在C++代码中读取但未使用）
-            stream.skip(4)
+            stream.skip(4) # objsize
             
             # 读取对象属性
             parents[o] = stream.read_int32()
@@ -60,26 +59,23 @@ class TJSByteCodeLoader:
             super_class_getters[o] = stream.read_int32()
             
             # 读取源代码位置信息
-            count = stream.read_int32()
-            source_positions = []
+            count: int = stream.read_int32()
+            source_positions: List[SourcePos] | None = None
             if count > 0:
                 # 读取代码位置
                 code_positions = [stream.read_int32() for _ in range(count)]
                 # 读取源代码位置
                 source_positions = [
-                    SourcePos(
-                        code_pos=code_positions[i],
-                        source_pos=stream.read_int32()
-                    ) for i in range(count)
+                    SourcePos(code_positions[i], stream.read_int32()) for i in range(count)
                 ]
             else:
                 stream.skip(count * 8)  # 跳过源代码位置数据
             
             # 读取代码
             code_size = stream.read_int32()
-            code = []
-            for i in range(code_size):
-                code.append(stream.read_uint16())
+            code: List[int] = [
+                stream.read_uint16() for _ in range(code_size)
+            ]
             
             # 对齐到4字节
             if code_size & 1:
@@ -88,7 +84,7 @@ class TJSByteCodeLoader:
             # 读取数据变体
             count = stream.read_int32()
             vcount = count * 2
-            data_list = [stream.read_uint16() for _ in range(vcount)]
+            data_list = [stream.read_int16() for _ in range(vcount)]
             
             # 创建变体数据
             vdata = [None] * count

@@ -20,6 +20,10 @@ class BinaryStream:
         """读取2字节无符号整数"""
         return struct.unpack('<H', self.stream.read(2))[0]
     
+    def read_int16(self) -> int:
+        """读取2字节有符号整数"""
+        return struct.unpack('<h', self.stream.read(2))[0]
+    
     def read_uint64(self) -> int:
         """读取8字节无符号整数"""
         return struct.unpack('<Q', self.stream.read(8))[0]

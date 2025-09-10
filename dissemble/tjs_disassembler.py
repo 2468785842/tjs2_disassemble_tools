@@ -15,11 +15,10 @@ class TJSDisassembler:
     def from_vm_reg_addr(addr: int) -> int:
         """从虚拟机寄存器地址转换为可读格式
         根据 C++ 宏定义: #define TJS_FROM_VM_REG_ADDR(x) ((tjs_int)(x) / (tjs_int)sizeof(tTJSVariant))
-        tTJSVariant 的大小为 16 字节
+        tTJSVariant 的大小为 20 字节
         """
-        # 假设 tTJSVariant 的大小为 16 字节
-        tjs_variant_size = 16
-        return addr // tjs_variant_size
+        # tjs_variant_size = 20
+        return addr # // tjs_variant_size
 
     @staticmethod
     def from_vm_code_addr(addr: int) -> int:
@@ -28,21 +27,16 @@ class TJSDisassembler:
         tjs_uint32 的大小为 4 字节
         """
         # tjs_uint32 的大小为 4 字节
-        tjs_uint32_size = 4
-        return addr // tjs_uint32_size
+        # tjs_uint32_size = 4
+        return addr # // tjs_uint32_size
     
     @staticmethod
-    def get_vm_reg_addr(base: TJSInterCodeContext.Data, x: int) -> int:
+    def get_const_data(base: TJSInterCodeContext.Data, x: int) -> None | int | float | str | bytes:
         if len(base) <= x:
-            print(f"{base}, {x}")
-            return 0
+            raise Exception(f"get_const_data: {base}, {x}")
         return base[x]
-
-    @staticmethod
-    def get_vm_reg(base: TJSInterCodeContext.Data, x: int) -> int:
-        return TJSDisassembler.get_vm_reg_addr(base, x)
     
-    def get_value_comment(self, value: Any) -> str:
+    def get_value_comment(self, value: None | int | float | str | bytes) -> str:
         """获取值的注释表示"""
         if value is None:
             return "null"
@@ -295,10 +289,8 @@ class TJSDisassembler:
             reg2 = self.from_vm_reg_addr(code_area[i + 2])
             reg3 = self.from_vm_reg_addr(code_area[i + 3])
             reg4 = self.from_vm_reg_addr(code_area[i + 4])
-            comment = ""
-            if data_area:
-                value = self.get_vm_reg(data_area, code_area[i + 3])
-                comment = f"*{reg3} = {self.get_value_comment(value)}"
+            value = self.get_const_data(data_area, code_area[i + 3])
+            comment = f"*{reg3} = {self.get_value_comment(value)}"
             return DisassembledInstruction(
                 address=i,
                 opcode=f"{mnemonic}pd",
@@ -650,10 +642,8 @@ class TJSDisassembler:
             reg2 = self.from_vm_reg_addr(code_area[i + 2])
             reg3 = self.from_vm_reg_addr(code_area[i + 3])
             
-            comment = ""
-            if data_area:
-                value = self.get_vm_reg(data_area, code_area[i + 3])
-                comment = f"*{reg3} = {self.get_value_comment(value)}"
+            value = self.get_const_data(data_area, code_area[i + 3])
+            comment = f"*{reg3} = {self.get_value_comment(value)}"
                 
             return DisassembledInstruction(
                 address=i,
@@ -701,10 +691,8 @@ class TJSDisassembler:
             reg2 = self.from_vm_reg_addr(code_area[i + 2])
             reg3 = self.from_vm_reg_addr(code_area[i + 3])
             
-            comment = ""
-            if data_area:
-                value = self.get_vm_reg(data_area, code_area[i + 3])
-                comment = f"*{reg3} = {self.get_value_comment(value)}"
+            value = self.get_const_data(data_area, code_area[i + 3])
+            comment = f"*{reg3} = {self.get_value_comment(value)}"
                 
             return DisassembledInstruction(
                 address=i,
@@ -835,7 +823,7 @@ class TJSDisassembler:
         comment = ""
         if opcode == TJSVMOpcode.VM_CALLD and data_area:
             reg3 = self.from_vm_reg_addr(code_area[i + 3])
-            value = self.get_vm_reg(data_area, code_area[i + 3])
+            value = self.get_const_data(data_area, code_area[i + 3])
             comment = f"*{reg3} = {self.get_value_comment(value)}"
         
         opcode_name = "call"
@@ -859,10 +847,8 @@ class TJSDisassembler:
         reg2 = self.from_vm_reg_addr(code_area[i + 2])
         reg3 = self.from_vm_reg_addr(code_area[i + 3])
         
-        comment = ""
-        if data_area:
-            value = self.get_vm_reg(data_area, code_area[i + 3])
-            comment = f"*{reg3} = {self.get_value_comment(value)}"
+        value = self.get_const_data(data_area, code_area[i + 3])
+        comment = f"*{reg3} = {self.get_value_comment(value)}"
         
         opcode_name = "gpd" if opcode == TJSVMOpcode.VM_GPD else "gpds"
         
@@ -878,11 +864,9 @@ class TJSDisassembler:
         reg1 = self.from_vm_reg_addr(code_area[i + 1])
         reg2 = self.from_vm_reg_addr(code_area[i + 2])
         reg3 = self.from_vm_reg_addr(code_area[i + 3])
-        
-        comment = ""
-        if data_area:
-            value = self.get_vm_reg(data_area, code_area[i + 2])
-            comment = f"*{reg2} = {self.get_value_comment(value)}"
+
+        value = self.get_const_data(data_area, code_area[i + 2])
+        comment = f"*{reg2} = {self.get_value_comment(value)}"
         
         if opcode == TJSVMOpcode.VM_SPD:
             opcode_name = "spd"
@@ -964,11 +948,9 @@ class TJSDisassembler:
         reg1 = self.from_vm_reg_addr(code_area[i + 1])
         reg2 = self.from_vm_reg_addr(code_area[i + 2])
         reg3 = self.from_vm_reg_addr(code_area[i + 3])
-        
-        comment = ""
-        if data_area:
-            value = self.get_vm_reg(data_area, code_area[i + 3])
-            comment = f"*{reg3} = {self.get_value_comment(value)}"
+    
+        value = self.get_const_data(data_area, code_area[i + 3])
+        comment = f"*{reg3} = {self.get_value_comment(value)}"
         
         opcode_name = "deld" if opcode == TJSVMOpcode.VM_DELD else "typeofd"
         
@@ -1119,12 +1101,7 @@ class TJSDisassembler:
         reg1 = self.from_vm_reg_addr(code_area[i + 1])
         reg2 = self.from_vm_reg_addr(code_area[i + 2])
         
-        comment = ""
-        if data_area:
-            # value = None
-            # if reg2 < len(data_area.long_array):
-            #     value = data_area.long_array[reg2]
-            comment = f"*{self.from_vm_reg_addr(reg2)} = {self.get_value_comment(self.get_vm_reg(data_area, code_area[i + 2]))}"
+        comment = f"*{self.from_vm_reg_addr(reg2)} = {self.get_value_comment(self.get_const_data(data_area, code_area[i + 2]))}"
             
         return DisassembledInstruction(
             address=i,
