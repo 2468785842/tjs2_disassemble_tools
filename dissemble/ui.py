@@ -53,7 +53,7 @@ class DisassemblyViewer(QMainWindow):
         self.file_system_model = QFileSystemModel()
         self.file_system_model.setRootPath(QDir.currentPath())
         self.file_system_model.setNameFilterDisables(False)
-        self.file_system_model.setFilter(QDir.AllDirs | QDir.Files | QDir.NoDotAndDotDot)
+        self.file_system_model.setFilter(QDir.Filter.AllDirs | QDir.Filter.Files | QDir.Filter.NoDotAndDotDot)
         
         self.file_tree = QTreeView()
         self.file_tree.setModel(self.file_system_model)
@@ -107,7 +107,7 @@ class DisassemblyViewer(QMainWindow):
         # 反汇编树
         self.disassembly_tree = QTreeWidget()
         self.disassembly_tree.setHeaderLabels(['Address', 'Opcode', 'Operands', 'Comment'])
-        self.disassembly_tree.header().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.disassembly_tree.header().setSectionResizeMode(QHeaderView.Interactive)
         right_layout.addWidget(self.disassembly_tree)
         
         # 添加分割器
