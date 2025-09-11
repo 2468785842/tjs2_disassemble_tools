@@ -9,7 +9,7 @@ from dissemble.ui import DisassemblyViewer
 def main():
     
     parser = argparse.ArgumentParser(description='反汇编二进制格式tjs脚本')
-    parser.add_argument('path', help='文件夹路径', default=None)
+    parser.add_argument('path', help='文件夹路径', nargs='?', default=None)
     
     args = parser.parse_args()
     base = os.path.dirname(PyQt5.__file__)
